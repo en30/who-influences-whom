@@ -1,0 +1,35 @@
+FROM hexpm/elixir:1.11.2-erlang-23.1.1-debian-stretch-20200607
+
+# install build dependencies
+RUN apt-get update
+RUN apt-get install -y curl locales inotify-tools
+
+RUN sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen
+RUN locale-gen
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
+
+WORKDIR /app
+
+# install hex + rebar
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+ENV ENTRYKIT_VERSION 0.4.0
+
+RUN curl --location --remote-name https://github.com/progrium/entrykit/releases/download/v${ENTRYKIT_VERSION}/entrykit_${ENTRYKIT_VERSION}_Linux_x86_64.tgz \
+    && tar -xvzf entrykit_${ENTRYKIT_VERSION}_Linux_x86_64.tgz \
+    && rm entrykit_${ENTRYKIT_VERSION}_Linux_x86_64.tgz \
+    && mv entrykit /bin/entrykit \
+    && chmod +x /bin/entrykit \
+    && entrykit --symlink
+
+COPY --from=asia-docker.pkg.dev/berglas/berglas/berglas:latest /bin/berglas /bin/berglas
+RUN chmod +x /bin/berglas
+
+ENTRYPOINT [ \
+    "prehook", "elixir -v", "--", \
+    "prehook", "mix deps.get", "--", \
+    "/bin/berglas", "exec",  "--"]
+

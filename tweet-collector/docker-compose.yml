@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  app: &app_base
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: ["mix", "run", "--no-halt"]
+    environment:
+      - "GOOGLE_APPLICATION_CREDENTIALS=/var/application_default_credentials.json"
+
+    volumes:
+      - ".:/app:cached"
+      - "~/.config/gcloud/application_default_credentials.json:/var/application_default_credentials.json"
+    ports:
+      - "8080:8080"
+    tty: true
+    stdin_open: true

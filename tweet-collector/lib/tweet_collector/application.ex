@@ -4,13 +4,17 @@ defmodule TweetCollector.Application do
   @moduledoc false
 
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
+    port = System.get_env("PORT", "8080") |> String.to_integer()
+
     children = [
-      # Starts a worker by calling: TweetCollector.Worker.start_link(arg)
-      # {TweetCollector.Worker, arg}
+      {Plug.Cowboy, scheme: :http, plug: TweetCollector.Router, options: [port: port]}
     ]
+
+    Logger.info("Starting application on port #{port}")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
