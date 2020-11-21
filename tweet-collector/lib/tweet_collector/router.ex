@@ -17,5 +17,5 @@ defmodule TweetCollector.Router do
 
   plug(:dispatch)
 
-  post("/tweets/:id/visit", to: TweetCollector.Walker)
+  post("/tweets/:id/fetch", to: TweetCollector.Fetcher)
 end

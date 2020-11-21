@@ -23,7 +23,11 @@ defmodule TweetCollector.MixProject do
   defp deps do
     [
       {:plug_cowboy, "~> 2.0"},
-      {:jason, "~> 1.2"}
+      {:jason, "~> 1.2"},
+      {:oauther, "~> 1.1"},
+      {:extwitter, "~> 0.12"},
+      {:google_api_firestore, "~> 0.20"},
+      {:goth, "~> 1.2.0"}
     ]
   end
 end

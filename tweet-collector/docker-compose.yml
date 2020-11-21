@@ -6,6 +6,12 @@ services:
       dockerfile: Dockerfile.dev
     command: ["mix", "run", "--no-halt"]
     environment:
+      - "GOOGLE_CLOUD_PROJECT=who-influences-whom"
+      - "TWITTER_BEARER_TOKEN=sm://who-influences-whom/TWITTER_BEARER_TOKEN"
+      - "TWITTER_API_KEY=sm://who-influences-whom/TWITTER_API_KEY"
+      - "TWITTER_API_SECRET=sm://who-influences-whom/TWITTER_API_SECRET"
+      - "TWITTER_ACCESS_TOKEN=sm://who-influences-whom/TWITTER_ACCESS_TOKEN"
+      - "TWITTER_ACCESS_TOKEN_SECRET=sm://who-influences-whom/TWITTER_ACCESS_TOKEN_SECRET"
       - "GOOGLE_APPLICATION_CREDENTIALS=/var/application_default_credentials.json"
 
     volumes:

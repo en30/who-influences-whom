@@ -1,9 +1,15 @@
 defmodule TweetCollector.RouterTest do
   use ExUnit.Case
   use Plug.Test
+
   alias TweetCollector.Router
 
   @opts Router.init([])
+
+  setup do
+    Mox.stub_with(TweetCollector.MockClient, TweetCollector.StubClient)
+    {:ok, []}
+  end
 
   test "returns ok" do
     res =
