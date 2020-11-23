@@ -157,19 +157,10 @@ export default function Home({ graphData }) {
 
       <header className="fixed top-0 left-0 z-50 bg-white w-full sm:w-auto sm:border-r border-b sm:rounded-br-lg py-2 px-4">
         <h1 className="font-bold text-gray-700">Who influences whom?</h1>
-        <p className="text-sm text-gray-500">
-          Visualization of mention relation of{' '}
-          <a
-            className="underline"
-            href="https://twitter.com/auth0/status/1329563881006641152"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            the tweet
-          </a>
-          .
-        </p>
-        <Tweet id="1329563881006641152" />
+        <details open className="text-sm text-gray-500">
+          <summary>Visualization of mention relation of the tweet.</summary>
+          <Tweet id="1329563881006641152" />
+        </details>
       </header>
 
       <main>
