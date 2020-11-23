@@ -3,7 +3,7 @@ import cytoscape from 'cytoscape'
 import * as admin from 'firebase-admin'
 import Head from 'next/head'
 import { useLayoutEffect, useRef, useState } from 'react'
-import styles from '../styles/Home.module.css'
+import Tweet from '../components/Tweet'
 
 export const getStaticProps: GetStaticProps = async (_context) => {
   if (!admin.apps.length) {
@@ -26,9 +26,8 @@ export const getStaticProps: GetStaticProps = async (_context) => {
         height: 80,
         width: 80,
         'background-fit': 'cover',
-        'border-color': '#000',
-        'border-width': 3,
-        'border-opacity': 0.5,
+        'border-color': '#e5e7eb',
+        'border-width': 2,
       },
     },
     {
@@ -45,17 +44,40 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   const users = {}
   const db = admin.firestore()
   let snapshot = await db.collection('users').get()
+  const nodeStylePromises = []
   snapshot.forEach((doc) => {
     const data = doc.data()
     const id = `user-${data.username}`
     users[doc.id] = data
-    nodes.push({ data: { id } })
-    style.push({
-      selector: `#${id}`,
-      style: {
-        'background-image': data.profile_image_url,
+    nodes.push({
+      data: {
+        id,
+        grabbable: false,
+        href: `https://twitter.com/i/user/${doc.id}`,
       },
     })
+    nodeStylePromises.push(
+      (async (url) => {
+        try {
+          const resp = await fetch(url, { method: 'HEAD' })
+          if (resp.status !== 404) {
+            return {
+              selector: `#${id}`,
+              style: {
+                'background-image': url,
+              },
+            }
+          }
+        } catch (e) {
+          console.error(e)
+        }
+
+        return {
+          selector: `#${id}`,
+          style: {},
+        }
+      })(data.profile_image_url)
+    )
   })
 
   snapshot = await db.collectionGroup('tweets').get()
@@ -64,6 +86,8 @@ export const getStaticProps: GetStaticProps = async (_context) => {
     const data = doc.data()
     if (data.entities && data.entities.mentions)
       data.entities.mentions.forEach(({ username }) => {
+        if (username === 'auth0') return
+
         edges.push({
           data: {
             id,
@@ -80,8 +104,8 @@ export const getStaticProps: GetStaticProps = async (_context) => {
         elements: {
           nodes,
           edges,
-        }, // list of graph elements to start with
-        style,
+        },
+        style: style.concat(await Promise.all(nodeStylePromises)),
       },
     },
     revalidate: 60 * 30,
@@ -94,33 +118,73 @@ export default function Home({ graphData }) {
 
   useLayoutEffect(() => {
     if (cyRef.current) {
-      setCy(
-        cytoscape({
-          container: cyRef.current,
-          ...graphData,
-          layout: {
-            name: 'concentric',
-            concentric(node) {
-              return node.indegree()
-            },
-            levelWidth(_nodes) {
-              return 1
-            },
+      const cy = cytoscape({
+        container: cyRef.current,
+        ...graphData,
+        layout: {
+          name: 'concentric',
+          concentric(node: any) {
+            return node.indegree()
           },
-        })
-      )
+          levelWidth(_nodes) {
+            return 1
+          },
+        },
+      })
+      cy.on('tap', 'node', (e) => {
+        window.open(e.target.data().href)
+      })
+
+      setCy(cy)
     }
   }, [cyRef.current])
 
   return (
-    <div className={styles.container}>
+    <div>
       <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>Who influences whom</title>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.twttr = (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || { };
+          if (d.getElementById(id)) return t;
+          js = d.createElement(s);
+          js.id = id;
+          js.src = "https://platform.twitter.com/widgets.js";
+          fjs.parentNode.insertBefore(js, fjs);
+
+          t._e = [];
+          t.ready = function(f) {
+            t._e.push(f);
+          };
+
+          return t;
+        }(document, "script", "twitter-wjs"));
+        `,
+          }}
+        ></script>
       </Head>
 
-      <main className={styles.main}>
-        <div className={styles.graph} ref={cyRef}></div>
+      <header className="fixed top-0 left-0 z-50 bg-white w-full sm:w-auto sm:border-r border-b sm:rounded-br-lg py-2 px-4">
+        <h1 className="font-bold text-gray-700">Who influences whom?</h1>
+        <p className="text-sm text-gray-500">
+          Visualization of mention relation of{' '}
+          <a
+            className="underline"
+            href="https://twitter.com/auth0/status/1329563881006641152"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            the tweet
+          </a>
+          .
+        </p>
+        <Tweet id="1329563881006641152" />
+      </header>
+
+      <main>
+        <div className="w-screen h-screen" ref={cyRef}></div>
       </main>
     </div>
   )
