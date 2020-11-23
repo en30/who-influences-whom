@@ -33,9 +33,9 @@ export const getStaticProps: GetStaticProps = async (_context) => {
     {
       selector: 'edge',
       style: {
-        width: 2,
+        width: 1,
         'curve-style': 'straight',
-        'target-arrow-shape': 'triangle-backcurve',
+        'target-arrow-shape': 'triangle',
       },
     },
   ]
@@ -45,6 +45,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   const usernameToUser = {}
   const db = admin.firestore()
   let snapshot = await db.collection('users').get()
+  console.log(snapshot.size, 'users') // eslint-disable-line no-console
   snapshot.forEach((doc) => {
     const data = doc.data()
     if (data.username === 'auth0') return
@@ -67,6 +68,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   })
 
   snapshot = await db.collectionGroup('tweets').get()
+  console.log(snapshot.size, 'tweets') // eslint-disable-line no-console
   snapshot.forEach((doc) => {
     const id = `tweet-${doc.id}`
     const data = doc.data()
@@ -96,7 +98,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
         style,
       },
     },
-    revalidate: 60 * 30,
+    revalidate: 60 * 60 * 24,
   }
 }
 
@@ -108,6 +110,7 @@ export default function Home({ graphData }) {
     if (cyRef.current) {
       const cy = cytoscape({
         container: cyRef.current,
+        hideEdgesOnViewport: true,
         autoungrabify: true,
         ...graphData,
         layout: {
