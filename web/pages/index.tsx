@@ -41,14 +41,16 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   ]
   const nodes = []
   const edges = []
-  const users = {}
+  const idToUser = {}
+  const usernameToUser = {}
   const db = admin.firestore()
   let snapshot = await db.collection('users').get()
   const nodeStylePromises = []
   snapshot.forEach((doc) => {
     const data = doc.data()
     const id = `user-${data.username}`
-    users[doc.id] = data
+    idToUser[doc.id] = data
+    usernameToUser[data.username] = data
     nodes.push({
       data: {
         id,
@@ -88,11 +90,15 @@ export const getStaticProps: GetStaticProps = async (_context) => {
       data.entities.mentions.forEach(({ username }) => {
         if (username === 'auth0') return
 
+        const source = idToUser[data.author_id]
+        const target = usernameToUser[username]
+        if (!source || !target) return
+
         edges.push({
           data: {
             id,
-            source: `user-${users[data.author_id].username}`,
-            target: `user-${username}`,
+            source: `user-${source.username}`,
+            target: `user-${target.username}`,
           },
         })
       })
