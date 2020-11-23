@@ -11,6 +11,7 @@ defmodule TweetCollector.APIClient do
       Map.merge(
         %{
           "query" => "conversation_id:#{id}",
+          "max_results" => 100,
           "tweet.fields" => ~w[
             attachments
             author_id

@@ -45,41 +45,25 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   const usernameToUser = {}
   const db = admin.firestore()
   let snapshot = await db.collection('users').get()
-  const nodeStylePromises = []
   snapshot.forEach((doc) => {
     const data = doc.data()
+    if (data.username === 'auth0') return
+
     const id = `user-${data.username}`
     idToUser[doc.id] = data
     usernameToUser[data.username] = data
     nodes.push({
       data: {
         id,
-        grabbable: false,
-        href: `https://twitter.com/i/user/${doc.id}`,
+        twitterId: doc.id,
       },
     })
-    nodeStylePromises.push(
-      (async (url) => {
-        try {
-          const resp = await fetch(url, { method: 'HEAD' })
-          if (resp.status !== 404) {
-            return {
-              selector: `#${id}`,
-              style: {
-                'background-image': url,
-              },
-            }
-          }
-        } catch (e) {
-          console.error(e)
-        }
-
-        return {
-          selector: `#${id}`,
-          style: {},
-        }
-      })(data.profile_image_url)
-    )
+    style.push({
+      selector: `#${id}`,
+      style: {
+        'background-image': data.profile_image_data_uri,
+      } as any,
+    })
   })
 
   snapshot = await db.collectionGroup('tweets').get()
@@ -88,8 +72,6 @@ export const getStaticProps: GetStaticProps = async (_context) => {
     const data = doc.data()
     if (data.entities && data.entities.mentions)
       data.entities.mentions.forEach(({ username }) => {
-        if (username === 'auth0') return
-
         const source = idToUser[data.author_id]
         const target = usernameToUser[username]
         if (!source || !target) return
@@ -111,7 +93,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
           nodes,
           edges,
         },
-        style: style.concat(await Promise.all(nodeStylePromises)),
+        style,
       },
     },
     revalidate: 60 * 30,
@@ -126,6 +108,7 @@ export default function Home({ graphData }) {
     if (cyRef.current) {
       const cy = cytoscape({
         container: cyRef.current,
+        autoungrabify: true,
         ...graphData,
         layout: {
           name: 'concentric',
@@ -138,7 +121,7 @@ export default function Home({ graphData }) {
         },
       })
       cy.on('tap', 'node', (e) => {
-        window.open(e.target.data().href)
+        window.open(`https://twitter.com/i/user/${e.target.data().twitterId}`)
       })
 
       setCy(cy)

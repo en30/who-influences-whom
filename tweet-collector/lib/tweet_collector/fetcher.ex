@@ -46,8 +46,8 @@ defmodule TweetCollector.Fetcher do
 
   defp next_token(conn) do
     case Repo.find(conn, "cursors/related_tweets_of") do
-      {:ok, %{"next_token" => next_token}} ->
-        {:ok, next_token}
+      {:ok, meta} ->
+        {:ok, meta["next_token"]}
 
       {:error, %{status: 404}} ->
         {:ok, nil}
@@ -68,12 +68,24 @@ defmodule TweetCollector.Fetcher do
   defp prepare_users(users) do
     users
     |> Enum.uniq_by(& &1["id"])
-    |> Enum.map(fn user = %{"id" => id} ->
-      Repo.prepare_write("users/#{id}", user)
+    |> Task.async_stream(&embed_image_data/1)
+    |> Enum.map(fn {:ok, user} ->
+      Repo.prepare_write("users/#{user["id"]}", user)
     end)
   end
 
   defp client() do
     Application.get_env(:tweet_collector, :twitter_client)
+  end
+
+  defp embed_image_data(user) do
+    case :httpc.request(:get, {user["profile_image_url"], []}, [], body_format: :binary) do
+      {:ok, {{_, 200, 'OK'}, headers, body}} ->
+        content_type = Enum.find_value(headers, fn {k, v} -> k == 'content-type' && v end)
+
+        Map.merge(user, %{
+          "profile_image_data_uri" => "data:#{content_type};base64,#{Base.encode64(body)}"
+        })
+    end
   end
 end
