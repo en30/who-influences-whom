@@ -1,11 +1,11 @@
 import { GetStaticProps } from 'next'
-import cytoscape from 'cytoscape';
+import cytoscape from 'cytoscape'
 import * as admin from 'firebase-admin'
 import Head from 'next/head'
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react'
 import styles from '../styles/Home.module.css'
 
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getStaticProps: GetStaticProps = async (_context) => {
   if (!admin.apps.length) {
     if (process.env.NODE_ENV === 'production') {
       admin.initializeApp({
@@ -23,55 +23,55 @@ export const getStaticProps: GetStaticProps = async (context) => {
     {
       selector: 'node',
       style: {
-        'height': 80,
-        'width': 80,
+        height: 80,
+        width: 80,
         'background-fit': 'cover',
         'border-color': '#000',
         'border-width': 3,
         'border-opacity': 0.5,
-      }
+      },
     },
     {
       selector: 'edge',
       style: {
-        "width": 2,
-        "curve-style": "straight",
+        width: 2,
+        'curve-style': 'straight',
         'target-arrow-shape': 'triangle-backcurve',
-      }
-    }
-  ];
-  const nodes = [];
-  const edges = [];
-  const users = {};
-  const db = admin.firestore();
-  let snapshot = await db.collection("users").get()
+      },
+    },
+  ]
+  const nodes = []
+  const edges = []
+  const users = {}
+  const db = admin.firestore()
+  let snapshot = await db.collection('users').get()
   snapshot.forEach((doc) => {
-    const data = doc.data();
-    const id = `user-${data.username}`;
-    users[doc.id] = data;
+    const data = doc.data()
+    const id = `user-${data.username}`
+    users[doc.id] = data
     nodes.push({ data: { id } })
     style.push({
       selector: `#${id}`,
       style: {
-        "background-image": data.profile_image_url,
-      }
+        'background-image': data.profile_image_url,
+      },
     })
   })
 
-  snapshot = await db.collectionGroup('tweets').get();
+  snapshot = await db.collectionGroup('tweets').get()
   snapshot.forEach((doc) => {
-    const id = `tweet-${doc.id}`;
-    const data = doc.data();
-    if (data.entities && data.entities.mentions) data.entities.mentions.forEach(({ username }) => {
-      edges.push({
-        data: {
-          id,
-          source: `user-${users[data.author_id].username}`,
-          target: `user-${username}`,
-        }
+    const id = `tweet-${doc.id}`
+    const data = doc.data()
+    if (data.entities && data.entities.mentions)
+      data.entities.mentions.forEach(({ username }) => {
+        edges.push({
+          data: {
+            id,
+            source: `user-${users[data.author_id].username}`,
+            target: `user-${username}`,
+          },
+        })
       })
-    })
-
   })
 
   return {
@@ -82,35 +82,34 @@ export const getStaticProps: GetStaticProps = async (context) => {
           edges,
         }, // list of graph elements to start with
         style,
-      }
-
+      },
     },
-    revalidate: 60 * 30
+    revalidate: 60 * 30,
   }
 }
 
 export default function Home({ graphData }) {
-  const [cy, setCy] = useState(null);
-  const cyRef = useRef(null);
-
+  const [, setCy] = useState(null)
+  const cyRef = useRef(null)
 
   useLayoutEffect(() => {
     if (cyRef.current) {
-      setCy(cytoscape({
-        container: cyRef.current,
-        ...graphData,
-        layout: {
-          name: 'concentric',
-          concentric(node) {
-            return node.indegree();
+      setCy(
+        cytoscape({
+          container: cyRef.current,
+          ...graphData,
+          layout: {
+            name: 'concentric',
+            concentric(node) {
+              return node.indegree()
+            },
+            levelWidth(_nodes) {
+              return 1
+            },
           },
-          levelWidth(nodes) {
-            return 1;
-          },
-        }
-      }))
+        })
+      )
     }
-
   }, [cyRef.current])
 
   return (
