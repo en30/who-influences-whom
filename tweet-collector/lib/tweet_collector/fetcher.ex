@@ -1,4 +1,5 @@
 defmodule TweetCollector.Fetcher do
+  require Logger
   import Plug.Conn
 
   alias TweetCollector.Repo
@@ -18,6 +19,7 @@ defmodule TweetCollector.Fetcher do
 
     case fetch(repo_conn, tweet_id) do
       {:ok, %{"meta" => %{"result_count" => 0}}} ->
+        Logger.info("no tweet to add")
         {:ok, nil}
 
       {:ok, res} ->
@@ -25,6 +27,8 @@ defmodule TweetCollector.Fetcher do
           [Repo.prepare_write("cursors/related_tweets_of", res["meta"])] ++
             prepare_tweets(res["data"] ++ res["includes"]["tweets"]) ++
             prepare_users(res["includes"]["users"])
+
+        Logger.info("#{length(writes)} writes")
 
         Repo.batch_write(repo_conn, writes)
     end
