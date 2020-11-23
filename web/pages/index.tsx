@@ -134,7 +134,7 @@ export default function Home({ graphData }) {
   return (
     <div>
       <Head>
-        <title>Who influences whom</title>
+        <title>Who influences whom?</title>
         <script
           dangerouslySetInnerHTML={{
             __html: `window.twttr = (function(d, s, id) {
@@ -161,7 +161,7 @@ export default function Home({ graphData }) {
       <header className="fixed top-0 left-0 z-50 bg-white w-full sm:w-auto sm:border-r border-b sm:rounded-br-lg py-2 px-4">
         <h1 className="font-bold text-gray-700">Who influences whom?</h1>
         <details open className="text-sm text-gray-500">
-          <summary>Visualization of mention relation of the tweet.</summary>
+          <summary>Visualization of mentions related to the tweet.</summary>
           <Tweet id="1329563881006641152" />
         </details>
       </header>
