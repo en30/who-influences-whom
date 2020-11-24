@@ -1,92 +1,62 @@
 import { GetStaticProps } from 'next'
 import cytoscape from 'cytoscape'
-import * as admin from 'firebase-admin'
 import Head from 'next/head'
 import { useLayoutEffect, useRef, useState } from 'react'
 import Tweet from '../components/Tweet'
+import * as Repo from '../src/repo'
 
 export const getStaticProps: GetStaticProps = async (_context) => {
-  if (!admin.apps.length) {
-    if (process.env.NODE_ENV === 'production') {
-      admin.initializeApp({
-        credential: admin.credential.cert(
-          JSON.parse(process.env.SERVICE_ACCOUNT_KEY!.replace(/\n/g, '\\n'))
-        ),
-      })
-    } else {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      })
-    }
-  }
-  const style = [
-    {
-      selector: 'node',
-      style: {
-        height: 80,
-        width: 80,
-        'background-fit': 'cover',
-        'border-color': '#e5e7eb',
-        'border-width': 2,
-      },
-    },
-    {
-      selector: 'edge',
-      style: {
-        width: 1,
-        'curve-style': 'straight',
-        'target-arrow-shape': 'triangle',
-      },
-    },
-  ]
-  const nodes = []
-  const edges = []
-  const idToUser = {}
-  const usernameToUser = {}
-  const db = admin.firestore()
-  let snapshot = await db.collection('users').get()
-  console.log(snapshot.size, 'users') // eslint-disable-line no-console
-  snapshot.forEach((doc) => {
-    const data = doc.data()
-    if (data.username === 'auth0') return
+  const [users, tweets] = await Promise.all([Repo.allUsers(), Repo.allTweets()])
+  console.log(users.length, 'users') // eslint-disable-line no-console
+  console.log(tweets.length, 'tweets') // eslint-disable-line no-console
 
-    const id = `user-${data.username}`
-    idToUser[doc.id] = data
-    usernameToUser[data.username] = data
+  const inDeg = {}
+  tweets.forEach((tweet) =>
+    (tweet.entities?.mentions || []).forEach(({ username }) => {
+      inDeg[username] = (inDeg[username] || 0) + 1
+    })
+  )
+
+  const nodes = []
+  const usernameToId = {}
+  const usedUserIds = new Set<string>()
+  users.forEach(({ id, username, profile_image_data_uri }) => {
+    if (username === 'auth0') return
+    if (inDeg[username] === undefined || inDeg[username] <= 10) return
+
+    const nodeId = `user-${id}`
     nodes.push({
       data: {
-        id,
-        twitterId: doc.id,
+        id: nodeId,
+        twitterId: id,
+        profileImageDataURI: profile_image_data_uri,
+        mentionInDegree: inDeg[username],
       },
     })
-    style.push({
-      selector: `#${id}`,
-      style: {
-        'background-image': data.profile_image_data_uri,
-      } as any,
-    })
+    usedUserIds.add(id)
+    usernameToId[username] = id
   })
 
-  snapshot = await db.collectionGroup('tweets').get()
-  console.log(snapshot.size, 'tweets') // eslint-disable-line no-console
-  snapshot.forEach((doc) => {
-    const id = `tweet-${doc.id}`
-    const data = doc.data()
-    if (data.entities && data.entities.mentions)
-      data.entities.mentions.forEach(({ username }) => {
-        const source = idToUser[data.author_id]
-        const target = usernameToUser[username]
-        if (!source || !target) return
+  const edges = []
+  tweets.forEach((tweet) =>
+    (tweet.entities?.mentions || []).forEach(({ username }) => {
+      const targetId = usernameToId[username]
+      if (!usedUserIds.has(tweet.author_id) || !usedUserIds.has(targetId))
+        return
 
-        edges.push({
-          data: {
-            id,
-            source: `user-${source.username}`,
-            target: `user-${target.username}`,
-          },
-        })
+      const edgeId = `tweet-${tweet.id}`
+      edges.push({
+        data: {
+          id: edgeId,
+          source: `user-${tweet.author_id}`,
+          target: `user-${targetId}`,
+        },
       })
-  })
+    })
+  )
+
+  console.log(nodes.length, 'nodes') // eslint-disable-line no-console
+  console.log(edges.length, 'edges') // eslint-disable-line no-console
 
   return {
     props: {
@@ -95,7 +65,6 @@ export const getStaticProps: GetStaticProps = async (_context) => {
           nodes,
           edges,
         },
-        style,
       },
     },
     revalidate: 60 * 60 * 24,
@@ -113,13 +82,34 @@ export default function Home({ graphData }) {
         hideEdgesOnViewport: true,
         autoungrabify: true,
         ...graphData,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              height: 80,
+              width: 80,
+              'background-fit': 'cover',
+              'border-color': '#e5e7eb',
+              'border-width': 2,
+              'background-image': `data(profileImageDataURI)`,
+            },
+          },
+          {
+            selector: 'edge',
+            style: {
+              width: 1,
+              'curve-style': 'straight',
+              'target-arrow-shape': 'triangle',
+            },
+          },
+        ],
         layout: {
           name: 'concentric',
           concentric(node: any) {
-            return node.indegree()
+            return node.data('mentionInDegree')
           },
           levelWidth(_nodes) {
-            return 1
+            return 4
           },
         },
       })
@@ -160,9 +150,13 @@ export default function Home({ graphData }) {
 
       <header className="fixed top-0 left-0 z-50 bg-white w-full sm:w-auto sm:border-r border-b sm:rounded-br-lg py-2 px-4">
         <h1 className="font-bold text-gray-700">Who influences whom?</h1>
-        <details open className="text-sm text-gray-500">
-          <summary>Visualization of mentions related to the tweet.</summary>
+        <details open className="text-xs text-gray-500">
+          <summary className="text-sm text-gray-500">
+            Visualization of mentions related to the tweet.
+          </summary>
           <Tweet id="1329563881006641152" />
+          For performance reason, the graph only includes users whose indegree
+          is greater than 10.
         </details>
       </header>
 
