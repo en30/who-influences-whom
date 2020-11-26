@@ -23,8 +23,8 @@ const Tweet = ({ id }) => {
 
   return (
     <div ref={ref}>
-      <div className="border rounded-lg p-3 w-full mt-3 mx-auto space-y-2">
-        <div className="animate-pulse flex space-x-2">
+      <div className="animate-pulse border rounded-lg p-3 w-full mt-3 mx-auto space-y-2">
+        <div className="flex space-x-2">
           <div className="rounded-full bg-gray-300 h-12 w-12"></div>
           <div className="flex-1 space-y-2 py-2">
             <div className="h-3 bg-gray-300 rounded w-1/4"></div>
