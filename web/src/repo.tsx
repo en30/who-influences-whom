@@ -18,8 +18,11 @@ const db = admin.firestore()
 
 type User = {
   id: string
+  name: string
   username: string
+  description: string
   profile_image_data_uri: string
+  profile_image_url: string
 }
 type Tweet = {
   id: string
