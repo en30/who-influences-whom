@@ -15,14 +15,22 @@ defmodule TweetCollector.Repo do
     end
   end
 
+  @max_writes_count 500
+
   def batch_write(conn, writes) do
-    Projects.firestore_projects_databases_documents_batch_write(
-      conn,
-      base_path(),
-      body: %GoogleApi.Firestore.V1.Model.BatchWriteRequest{
-        writes: writes
-      }
-    )
+    Enum.chunk_every(writes, @max_writes_count)
+    |> Enum.map(fn chunk ->
+      Projects.firestore_projects_databases_documents_batch_write(
+        conn,
+        base_path(),
+        body: %GoogleApi.Firestore.V1.Model.BatchWriteRequest{
+          writes: chunk
+        }
+      )
+    end)
+    |> Enum.reduce({:ok, []}, fn {:ok, x}, {:ok, acc} ->
+      {:ok, [x | acc]}
+    end)
   end
 
   def prepare_write(path, v) do
