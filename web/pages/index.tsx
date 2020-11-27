@@ -22,35 +22,22 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   const nodes = []
   const usernameToId = {}
   const usedUserIds = new Set<string>()
-  users.forEach(
-    ({
-      id,
-      name,
-      username,
-      description,
-      profile_image_data_uri,
-      profile_image_url,
-    }) => {
-      if (username === 'auth0') return
-      if (inDeg[username] === undefined || inDeg[username] <= 10) return
+  users.forEach((user) => {
+    const { id, username } = user
+    if (username === 'auth0') return
+    if (inDeg[username] === undefined || inDeg[username] <= 10) return
 
-      const nodeId = `user-${id}`
-      nodes.push({
-        data: {
-          id: nodeId,
-          twitterId: id,
-          name,
-          username,
-          description,
-          profileImageDataURI: profile_image_data_uri,
-          profileImageURL: profile_image_url,
-          mentionInDegree: inDeg[username],
-        },
-      })
-      usedUserIds.add(id)
-      usernameToId[username] = id
-    }
-  )
+    const nodeId = `user-${id}`
+    nodes.push({
+      data: {
+        id: nodeId,
+        mentionInDegree: inDeg[username],
+        user,
+      },
+    })
+    usedUserIds.add(id)
+    usernameToId[username] = id
+  })
 
   const edges = []
   tweets.forEach((tweet) =>
@@ -65,6 +52,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
           id: edgeId,
           source: `user-${tweet.author_id}`,
           target: `user-${targetId}`,
+          tweet,
         },
       })
     })
@@ -109,7 +97,8 @@ export default function Home({ graphData }) {
               'background-fit': 'cover',
               'border-color': '#e5e7eb',
               'border-width': 2,
-              'background-image': `data(profileImageDataURI)`,
+              'background-image': (ele) =>
+                ele.data().user.profile_image_data_uri,
             },
           },
           {
@@ -133,14 +122,14 @@ export default function Home({ graphData }) {
       })
       cy.on('tap', 'node', (e) => {
         location.hash = e.target.id()
-        setUser(e.target.data())
+        setUser(e.target.data().user)
         setTweet(null)
         setIsDetailOpen(true)
       })
       cy.on('tap', 'edge', (e) => {
         location.hash = e.target.id()
         setUser(null)
-        setTweet(e.target.data())
+        setTweet(e.target.data().tweet)
         setIsDetailOpen(true)
       })
       cy.on('tap', (e) => {

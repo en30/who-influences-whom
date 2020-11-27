@@ -16,15 +16,33 @@ if (!admin.apps.length) {
 
 const db = admin.firestore()
 
-type User = {
+export type Mention = { start: number; end: number; username: string }
+export type ShortendedURL = {
+  start: number
+  end: number
+  url: string
+  display_url: string
+  expanded_url: string
+}
+export type UserEntities = {
+  description?: {
+    mentions?: Array<Mention>
+    urls: Array<ShortendedURL>
+  }
+  url?: {
+    urls: [ShortendedURL]
+  }
+}
+export type User = {
   id: string
   name: string
   username: string
   description: string
   profile_image_data_uri: string
   profile_image_url: string
+  entities?: UserEntities
 }
-type Tweet = {
+export type Tweet = {
   id: string
   author_id: string
   entities?: {
