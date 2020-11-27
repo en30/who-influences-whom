@@ -4,6 +4,7 @@ import Head from 'next/head'
 import { useLayoutEffect, useRef, useState } from 'react'
 import Header from '../components/Header'
 import Tweet from '../components/Tweet'
+import User from '../components/User'
 import * as Repo from '../src/repo'
 
 export const getStaticProps: GetStaticProps = async (_context) => {
@@ -198,47 +199,8 @@ export default function Home({ graphData }) {
             : 'translate-y-64 sm:translate-x-80')
         }
       >
-        {user ? (
-          <>
-            <div className="py-2 flex">
-              <a
-                className="w-12 h-12"
-                style={{ flex: '0 0 48px' }}
-                href={`https://twitter.com/i/user/${user.twitterId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src={user.profileImageURL}
-                  alt="Picture of the user"
-                  width={48}
-                  height={48}
-                  className="border rounded-full w-12 h-12"
-                />
-              </a>
-              <div className="ml-3">
-                <a
-                  className="block leading-tight text-black font-bold"
-                  href={`https://twitter.com/i/user/${user.twitterId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {user.name}
-                </a>
-                <a
-                  className="block leading-tight text-gray-500 text-md"
-                  href={`https://twitter.com/i/user/${user.twitterId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  @{user.username}
-                </a>
-                <div className="leading-tight mt-2">{user.description}</div>
-              </div>
-            </div>
-          </>
-        ) : null}
-        {tweet && <Tweet id={tweet.id.replace(/^tweet-/, '')} />}
+        {user && <User user={user} />}
+        {tweet && <Tweet tweet={tweet} />}
       </div>
     </div>
   )

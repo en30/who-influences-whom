@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import Tweet from '../components/Tweet'
+import EmbeddedTweet from '../components/EmbeddedTweet'
 
 const key = 'isHeaderOpen'
 
@@ -33,7 +33,7 @@ const Header = () => {
           <div className="text-sm text-gray-500">
             Visualization of mentions related to the tweet.
           </div>
-          <Tweet id="1329563881006641152" />
+          <EmbeddedTweet id="1329563881006641152" />
           <div className="text-xs text-gray-500">
             For performance reason, the graph only includes users whose indegree
             is greater than 10.
