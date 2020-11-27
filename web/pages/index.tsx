@@ -196,7 +196,7 @@ export default function Home({ graphData }) {
           'sm:right-0 sm:top-0 sm:left-auto sm:bottom-auto sm:border-t-0 sm:border-l sm:w-80 sm:h-full ' +
           (isDetailOpen
             ? 'translate-y-0 sm:translate-x-0'
-            : 'translate-y-64 sm:translate-x-80')
+            : 'translate-y-64 sm:translate-y-0 sm:translate-x-80')
         }
       >
         {user && <User user={user} />}
