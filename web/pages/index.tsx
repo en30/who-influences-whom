@@ -163,11 +163,24 @@ export default function Home({ graphData }: Props) {
             },
           },
           {
+            selector: 'node:selected',
+            style: {
+              height: 120,
+              width: 120,
+            },
+          },
+          {
             selector: 'edge',
             style: {
               width: 1,
               'curve-style': 'straight',
               'target-arrow-shape': 'triangle',
+            },
+          },
+          {
+            selector: 'edge:selected',
+            style: {
+              width: 3,
             },
           },
         ],
