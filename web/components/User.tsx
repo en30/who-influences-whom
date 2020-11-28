@@ -1,4 +1,6 @@
+import { MouseEvent } from 'react'
 import { User as UserModel, Mention, ShortendedURL } from '../src/repo'
+import CloseButton from './CloseButton'
 
 const Link = ({ to, children, ...props }) => (
   <a
@@ -78,8 +80,17 @@ const Description = ({
   )
 }
 
-const User = ({ user }: { user: UserModel }) => (
+const User = ({
+  user,
+  close,
+}: {
+  user: UserModel
+  close: (event: MouseEvent<HTMLButtonElement>) => void
+}) => (
   <>
+    <div className="flex justify-end">
+      <CloseButton onClick={close} />
+    </div>
     <div className="py-2 flex">
       <Link to={user} className="w-12 h-12" style={{ flex: '0 0 48px' }}>
         <img

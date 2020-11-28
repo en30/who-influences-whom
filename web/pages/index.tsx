@@ -188,8 +188,8 @@ export default function Home({ graphData }) {
             : 'translate-y-64 sm:translate-y-0 sm:translate-x-80')
         }
       >
-        {user && <User user={user} />}
-        {tweet && <Tweet tweet={tweet} />}
+        {user && <User user={user} close={() => setIsDetailOpen(false)} />}
+        {tweet && <Tweet tweet={tweet} close={() => setIsDetailOpen(false)} />}
       </div>
     </div>
   )
