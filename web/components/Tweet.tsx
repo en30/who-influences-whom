@@ -32,7 +32,9 @@ const Tweet = ({
       </div>
       <CloseButton onClick={close} />
     </div>
-    <EmbeddedTweet id={tweet.id} />
+    <div className="py-1">
+      <EmbeddedTweet id={tweet.id} />
+    </div>
   </>
 )
 

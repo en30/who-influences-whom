@@ -261,11 +261,11 @@ export default function Home({ graphData }: Props) {
 
       <div
         className={
-          'fixed bottom-0 left-0 border-t bg-white w-full h-64 py-2 px-4 transition-transform transform ' +
+          'fixed bottom-0 left-0 border-t bg-white w-full h-72 overflow-y-scroll py-2 px-4 transition-transform transform ' +
           'sm:right-0 sm:top-0 sm:left-auto sm:bottom-auto sm:border-t-0 sm:border-l sm:w-80 sm:h-full ' +
           (isDetailOpen
             ? 'translate-y-0 sm:translate-x-0'
-            : 'translate-y-64 sm:translate-y-0 sm:translate-x-80')
+            : 'translate-y-72 sm:translate-y-0 sm:translate-x-80')
         }
         onTransitionEnd={onDetailClosed}
       >

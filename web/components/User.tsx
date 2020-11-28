@@ -92,7 +92,7 @@ const User = ({
       </div>
       <CloseButton onClick={close} />
     </div>
-    <div className="py-1 flex">
+    <div className="py-2 flex">
       <Link to={user} className="w-12 h-12" style={{ flex: '0 0 48px' }}>
         <img
           src={user.profile_image_url}
@@ -103,12 +103,16 @@ const User = ({
         />
       </Link>
       <div className="ml-3">
-        <Link to={user} className="block leading-tight text-black font-bold">
-          {user.name}
-        </Link>
-        <Link to={user} className="block leading-tight text-gray-500 text-md">
-          @{user.username}
-        </Link>
+        <div>
+          <Link to={user} className="leading-tight text-black font-bold">
+            {user.name}
+          </Link>
+        </div>
+        <div>
+          <Link to={user} className="leading-tight text-gray-500 text-md">
+            @{user.username}
+          </Link>
+        </div>
         <Description entities={user.entities?.description}>
           {user.description}
         </Description>
