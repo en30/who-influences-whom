@@ -6,6 +6,7 @@ import Header from '../components/Header'
 import Tweet from '../components/Tweet'
 import User from '../components/User'
 import * as Repo from '../src/repo'
+import { Tweet as TweetModel, User as UserModel } from '../src/repo'
 
 export const getStaticProps: GetStaticProps = async (_context) => {
   const [users, tweets] = await Promise.all([Repo.allUsers(), Repo.allTweets()])
@@ -74,12 +75,11 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   }
 }
 
-export default function Home({ graphData }) {
-  const [user, setUser] = useState(null)
-  const [tweet, setTweet] = useState(null)
+type Resource = ['user', UserModel] | ['tweet', TweetModel] | null
 
+export default function Home({ graphData }) {
+  const [resource, setResource] = useState<Resource>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
-  const [, setCy] = useState(null)
   const cyRef = useRef(null)
 
   const startClosingDetail = () => setIsDetailOpen(false)
@@ -105,8 +105,7 @@ export default function Home({ graphData }) {
           (node) => node.data.user.id === match[1]
         )
         if (!node) return
-        setUser(node.data.user)
-        setTweet(null)
+        setResource(['user', node.data.user])
         setIsDetailOpen(true)
         return
       }
@@ -116,14 +115,12 @@ export default function Home({ graphData }) {
           (edge) => edge.data.tweet.id === match[1]
         )
         if (!edge) return
-        setUser(null)
-        setTweet(edge.data.tweet)
+        setResource(['tweet', edge.data.tweet])
         setIsDetailOpen(true)
         return
       }
 
-      setUser(null)
-      setTweet(null)
+      setResource(null)
       setIsDetailOpen(false)
     }
 
@@ -182,7 +179,7 @@ export default function Home({ graphData }) {
         }
       })
 
-      setCy(cy)
+      return () => cy.destroy()
     }
   }, [cyRef.current])
 
@@ -228,8 +225,12 @@ export default function Home({ graphData }) {
         }
         onTransitionEnd={onDetailClosed}
       >
-        {user && <User user={user} close={startClosingDetail} />}
-        {tweet && <Tweet tweet={tweet} close={startClosingDetail} />}
+        {resource && resource[0] === 'user' && (
+          <User user={resource[1]} close={startClosingDetail} />
+        )}
+        {resource && resource[0] === 'tweet' && (
+          <Tweet tweet={resource[1]} close={startClosingDetail} />
+        )}
       </div>
     </div>
   )
