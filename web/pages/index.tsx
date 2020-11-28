@@ -94,6 +94,7 @@ type Resource = ['user', UserModel] | ['tweet', TweetModel] | null
 export default function Home({ graphData }: Props) {
   const [resource, setResource] = useState<Resource>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const onCyCreated = useRef<(cy: cytoscape.Core) => void>(() => undefined)
   const cyRef = useRef(null)
 
   const startClosingDetail = () => setIsDetailOpen(false)
@@ -120,6 +121,7 @@ export default function Home({ graphData }: Props) {
         )
         if (!node) return
         setResource(['user', node.data.user])
+        onCyCreated.current = (cy) => cy.$(`#${node.data.id}`).select()
         setIsDetailOpen(true)
         return
       }
@@ -130,6 +132,7 @@ export default function Home({ graphData }: Props) {
         )
         if (!edge) return
         setResource(['tweet', edge.data.tweet])
+        onCyCreated.current = (cy) => cy.$(`#${edge.data.id}`).select()
         setIsDetailOpen(true)
         return
       }
@@ -205,6 +208,8 @@ export default function Home({ graphData }: Props) {
           startClosingDetail()
         }
       })
+      onCyCreated.current(cy)
+      onCyCreated.current = () => undefined
 
       return () => cy.destroy()
     }
