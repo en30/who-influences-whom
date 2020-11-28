@@ -252,6 +252,34 @@ export default function Home({ graphData }: Props) {
         `,
           }}
         ></script>
+
+        <head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# website: http://ogp.me/ns/website#" />
+        <meta
+          property="og:url"
+          content="https://who-influences-whom.vercel.app"
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Who influences whom?" />
+        <meta
+          property="og:description"
+          content={`Mention graph of a tweet from auth0, "Name a developer who's had an influence on you."`}
+        />
+        <meta
+          property="og:image"
+          content="https://who-influences-whom.vercel.app/screen_shot.png"
+        />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:creator" content="@en30Y" />
+        <meta name="twitter:title" content="Who influences whom?" />
+        <meta
+          name="twitter:description"
+          content={`Mention graph of a tweet from auth0, "Name a developer who's had an influence on you."`}
+        />
+        <meta
+          name="twitter:image"
+          content="https://who-influences-whom.vercel.app/screen_shot.png"
+        />
       </Head>
 
       <Header />
