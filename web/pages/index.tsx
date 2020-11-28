@@ -33,7 +33,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
 
   const nodes: Array<GraphNode> = []
   const usernameToId = {}
-  const usedUserIds = new Set<string>()
+  const usedUsers: { [id: string]: UserModel } = {}
   users.forEach((user) => {
     const { id, username } = user
     if (username === 'auth0') return
@@ -41,16 +41,17 @@ export const getStaticProps: GetStaticProps = async (_context) => {
       return
 
     const nodeId = `user-${id}`
+    const nodeUser = {
+      ...user,
+      mentionIds: mentionIds[username],
+    }
     nodes.push({
       data: {
         id: nodeId,
-        user: {
-          ...user,
-          mentionIds: mentionIds[username],
-        },
+        user: nodeUser,
       },
     })
-    usedUserIds.add(id)
+    usedUsers[nodeUser.id] = nodeUser
     usernameToId[username] = id
   })
 
@@ -58,8 +59,7 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   tweets.forEach((tweet) =>
     (tweet.entities?.mentions || []).forEach(({ username }) => {
       const targetId = usernameToId[username]
-      if (!usedUserIds.has(tweet.author_id) || !usedUserIds.has(targetId))
-        return
+      if (!usedUsers[tweet.author_id] || !usedUsers[targetId]) return
 
       const edgeId = `tweet-${tweet.id}`
       edges.push({
@@ -67,7 +67,19 @@ export const getStaticProps: GetStaticProps = async (_context) => {
           id: edgeId,
           source: `user-${tweet.author_id}`,
           target: `user-${targetId}`,
-          tweet,
+          tweet: {
+            ...tweet,
+            edge: {
+              source: {
+                href: `#user-${tweet.author_id}`,
+                username: usedUsers[tweet.author_id].username,
+              },
+              target: {
+                href: `#user-${targetId}`,
+                username: usedUsers[targetId].username,
+              },
+            },
+          },
         },
       })
     })

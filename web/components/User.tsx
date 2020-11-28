@@ -86,7 +86,7 @@ const User = ({
   close: (event: MouseEvent<HTMLButtonElement>) => void
 }) => (
   <>
-    <div className="flex align-items-center">
+    <div className="flex items-center">
       <div className="flex-1 text-sm text-gray-500">
         {user.mentionIds.length} mentions
       </div>

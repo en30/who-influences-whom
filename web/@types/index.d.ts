@@ -4,7 +4,12 @@ type UserModel = User & {
   mentionIds: Array<string>
 }
 
-type TweetModel = Tweet
+type TweetModel = Tweet & {
+  edge: {
+    source: { href: string; username: string }
+    target: { href: string; username: string }
+  }
+}
 
 type GraphNode = {
   data: {
