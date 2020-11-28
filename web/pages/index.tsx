@@ -1,7 +1,7 @@
 import { GetStaticProps } from 'next'
 import cytoscape from 'cytoscape'
 import Head from 'next/head'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Header from '../components/Header'
 import Tweet from '../components/Tweet'
 import User from '../components/User'
@@ -82,6 +82,56 @@ export default function Home({ graphData }) {
   const [, setCy] = useState(null)
   const cyRef = useRef(null)
 
+  const startClosingDetail = () => setIsDetailOpen(false)
+  const onDetailClosed = (e) => {
+    if (isDetailOpen) return
+
+    // to trigger hashchange
+    location.hash = ''
+
+    // to remove hash completely
+    history.pushState(
+      '',
+      document.title,
+      window.location.pathname + window.location.search
+    )
+  }
+
+  useEffect(() => {
+    const setResourceByHash = () => {
+      let match = location.hash.match(/^#user-([\d]+)$/)
+      if (match) {
+        const node = graphData.elements.nodes.find(
+          (node) => node.data.user.id === match[1]
+        )
+        if (!node) return
+        setUser(node.data.user)
+        setTweet(null)
+        setIsDetailOpen(true)
+        return
+      }
+      match = location.hash.match(/^#tweet-([\d]+)$/)
+      if (match) {
+        const edge = graphData.elements.edges.find(
+          (edge) => edge.data.tweet.id === match[1]
+        )
+        if (!edge) return
+        setUser(null)
+        setTweet(edge.data.tweet)
+        setIsDetailOpen(true)
+        return
+      }
+
+      setUser(null)
+      setTweet(null)
+      setIsDetailOpen(false)
+    }
+
+    setResourceByHash()
+    window.addEventListener('hashchange', setResourceByHash, false)
+    return () => window.removeEventListener('hashchange', setResourceByHash)
+  }, [])
+
   useLayoutEffect(() => {
     if (cyRef.current) {
       const cy = cytoscape({
@@ -122,24 +172,13 @@ export default function Home({ graphData }) {
       })
       cy.on('tap', 'node', (e) => {
         location.hash = e.target.id()
-        setUser(e.target.data().user)
-        setTweet(null)
-        setIsDetailOpen(true)
       })
       cy.on('tap', 'edge', (e) => {
         location.hash = e.target.id()
-        setUser(null)
-        setTweet(e.target.data().tweet)
-        setIsDetailOpen(true)
       })
       cy.on('tap', (e) => {
         if (e.target === cy) {
-          history.pushState(
-            '',
-            document.title,
-            window.location.pathname + window.location.search
-          )
-          setIsDetailOpen(false)
+          startClosingDetail()
         }
       })
 
@@ -187,9 +226,10 @@ export default function Home({ graphData }) {
             ? 'translate-y-0 sm:translate-x-0'
             : 'translate-y-64 sm:translate-y-0 sm:translate-x-80')
         }
+        onTransitionEnd={onDetailClosed}
       >
-        {user && <User user={user} close={() => setIsDetailOpen(false)} />}
-        {tweet && <Tweet tweet={tweet} close={() => setIsDetailOpen(false)} />}
+        {user && <User user={user} close={startClosingDetail} />}
+        {tweet && <Tweet tweet={tweet} close={startClosingDetail} />}
       </div>
     </div>
   )
