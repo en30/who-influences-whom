@@ -6,41 +6,55 @@ import Header from '../components/Header'
 import Tweet from '../components/Tweet'
 import User from '../components/User'
 import * as Repo from '../src/repo'
-import { Tweet as TweetModel, User as UserModel } from '../src/repo'
+import {
+  GraphData,
+  GraphEdge,
+  GraphNode,
+  TweetModel,
+  UserModel,
+} from '../@types'
+
+type Props = {
+  graphData: GraphData
+}
 
 export const getStaticProps: GetStaticProps = async (_context) => {
   const [users, tweets] = await Promise.all([Repo.allUsers(), Repo.allTweets()])
   console.log(users.length, 'users') // eslint-disable-line no-console
   console.log(tweets.length, 'tweets') // eslint-disable-line no-console
 
-  const inDeg = {}
+  const mentionIds: { [key: string]: UserModel['mentionIds'] } = {}
   tweets.forEach((tweet) =>
     (tweet.entities?.mentions || []).forEach(({ username }) => {
-      inDeg[username] = (inDeg[username] || 0) + 1
+      if (mentionIds[username] === undefined) mentionIds[username] = []
+      mentionIds[username].push(tweet.id)
     })
   )
 
-  const nodes = []
+  const nodes: Array<GraphNode> = []
   const usernameToId = {}
   const usedUserIds = new Set<string>()
   users.forEach((user) => {
     const { id, username } = user
     if (username === 'auth0') return
-    if (inDeg[username] === undefined || inDeg[username] <= 10) return
+    if (mentionIds[username] === undefined || mentionIds[username].length <= 10)
+      return
 
     const nodeId = `user-${id}`
     nodes.push({
       data: {
         id: nodeId,
-        mentionInDegree: inDeg[username],
-        user,
+        user: {
+          ...user,
+          mentionIds: mentionIds[username],
+        },
       },
     })
     usedUserIds.add(id)
     usernameToId[username] = id
   })
 
-  const edges = []
+  const edges: Array<GraphEdge> = []
   tweets.forEach((tweet) =>
     (tweet.entities?.mentions || []).forEach(({ username }) => {
       const targetId = usernameToId[username]
@@ -77,13 +91,13 @@ export const getStaticProps: GetStaticProps = async (_context) => {
 
 type Resource = ['user', UserModel] | ['tweet', TweetModel] | null
 
-export default function Home({ graphData }) {
+export default function Home({ graphData }: Props) {
   const [resource, setResource] = useState<Resource>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const cyRef = useRef(null)
 
   const startClosingDetail = () => setIsDetailOpen(false)
-  const onDetailClosed = (e) => {
+  const onDetailClosed = () => {
     if (isDetailOpen) return
 
     // to trigger hashchange
@@ -160,7 +174,7 @@ export default function Home({ graphData }) {
         layout: {
           name: 'concentric',
           concentric(node: any) {
-            return node.data('mentionInDegree')
+            return node.data('user').mentionIds.length
           },
           levelWidth(_nodes) {
             return 4

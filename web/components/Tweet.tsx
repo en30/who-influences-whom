@@ -1,7 +1,7 @@
 import { MouseEvent } from 'react'
-import { Tweet as TweetModel } from '../src/repo'
 import EmbeddedTweet from './EmbeddedTweet'
 import CloseButton from './CloseButton'
+import { TweetModel } from '../@types'
 
 const Tweet = ({
   tweet,

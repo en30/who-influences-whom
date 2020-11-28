@@ -1,5 +1,6 @@
 import { MouseEvent } from 'react'
-import { User as UserModel, Mention, ShortendedURL } from '../src/repo'
+import { UserModel } from '../@types'
+import { Mention, ShortendedURL } from '../src/repo'
 import CloseButton from './CloseButton'
 
 const Link = ({ to, children, ...props }) => (
@@ -42,10 +43,7 @@ const Description = ({
   entities,
 }: {
   children: string
-  entities?: {
-    mentions?: Array<Mention>
-    urls: Array<ShortendedURL>
-  }
+  entities?: UserModel['entities']['description']
 }) => {
   let parts = [[0, children.length, children]]
 
@@ -88,10 +86,13 @@ const User = ({
   close: (event: MouseEvent<HTMLButtonElement>) => void
 }) => (
   <>
-    <div className="flex justify-end">
+    <div className="flex align-items-center">
+      <div className="flex-1 text-sm text-gray-500">
+        {user.mentionIds.length} mentions
+      </div>
       <CloseButton onClick={close} />
     </div>
-    <div className="py-2 flex">
+    <div className="py-1 flex">
       <Link to={user} className="w-12 h-12" style={{ flex: '0 0 48px' }}>
         <img
           src={user.profile_image_url}

@@ -24,7 +24,7 @@ export type ShortendedURL = {
   display_url: string
   expanded_url: string
 }
-export type UserEntities = {
+type UserEntities = {
   description?: {
     mentions?: Array<Mention>
     urls: Array<ShortendedURL>
