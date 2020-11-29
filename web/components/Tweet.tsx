@@ -1,4 +1,4 @@
-import { MouseEvent } from 'react'
+import { MouseEvent, memo } from 'react'
 import EmbeddedTweet from './EmbeddedTweet'
 import CloseButton from './CloseButton'
 import { TweetModel } from '../@types'
@@ -11,7 +11,7 @@ const Tweet = ({
   close: (event: MouseEvent<HTMLButtonElement>) => void
 }) => (
   <>
-    <div className="flex items-center">
+    <div className="flex items-center px-4 py-2">
       <div className="flex-1 flex items-center text-sm text-gray-500">
         <a href={tweet.edge.source.href}>@{tweet.edge.source.username}</a>
         <svg
@@ -32,10 +32,10 @@ const Tweet = ({
       </div>
       <CloseButton onClick={close} />
     </div>
-    <div className="py-1">
+    <div className="px-4">
       <EmbeddedTweet id={tweet.id} />
     </div>
   </>
 )
 
-export default Tweet
+export default memo(Tweet)

@@ -1,7 +1,8 @@
 import { Tweet, User } from '../src/repo'
 
 type UserModel = User & {
-  mentionIds: Array<string>
+  inMentionIds: Array<string>
+  outMentionIds: Array<string>
 }
 
 type TweetModel = Tweet & {

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, memo } from 'react'
 
 const EmbeddedTweet = ({ id }) => {
   const ref = useRef(null)
@@ -29,7 +29,7 @@ const EmbeddedTweet = ({ id }) => {
   return (
     <div>
       {loading ? (
-        <div className="animate-pulse border rounded-lg p-3 w-full my-3 mx-auto space-y-2">
+        <div className="animate-pulse border rounded-lg p-3 w-full my-1 mx-auto space-y-2">
           <div className="flex space-x-2">
             <div className="rounded-full bg-gray-300 h-12 w-12"></div>
             <div className="flex-1 space-y-2 py-2">
@@ -51,4 +51,4 @@ const EmbeddedTweet = ({ id }) => {
   )
 }
 
-export default EmbeddedTweet
+export default memo(EmbeddedTweet)

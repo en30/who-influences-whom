@@ -1,6 +1,12 @@
 import { GetStaticProps } from 'next'
 import cytoscape from 'cytoscape'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react'
 import Header from '../components/Header'
 import Tweet from '../components/Tweet'
 import User from '../components/User'
@@ -22,13 +28,20 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   console.log(users.length, 'users') // eslint-disable-line no-console
   console.log(tweets.length, 'tweets') // eslint-disable-line no-console
 
-  const mentionIds: { [key: string]: UserModel['mentionIds'] } = {}
-  tweets.forEach((tweet) =>
-    (tweet.entities?.mentions || []).forEach(({ username }) => {
-      if (mentionIds[username] === undefined) mentionIds[username] = []
-      mentionIds[username].push(tweet.id)
+  const usernameToInMentionIds: {
+    [username: string]: UserModel['inMentionIds']
+  } = {}
+  const idToOutMentionIds: { [userId: string]: UserModel['outMentionIds'] } = {}
+  tweets.forEach((tweet) => {
+    ;(tweet.entities?.mentions || []).forEach(({ username }) => {
+      if (usernameToInMentionIds[username] === undefined)
+        usernameToInMentionIds[username] = []
+      usernameToInMentionIds[username].push(tweet.id)
     })
-  )
+    if (idToOutMentionIds[tweet.author_id] === undefined)
+      idToOutMentionIds[tweet.author_id] = []
+    idToOutMentionIds[tweet.author_id].push(tweet.id)
+  })
 
   const nodes: Array<GraphNode> = []
   const usernameToId = {}
@@ -36,13 +49,17 @@ export const getStaticProps: GetStaticProps = async (_context) => {
   users.forEach((user) => {
     const { id, username } = user
     if (username === 'auth0') return
-    if (mentionIds[username] === undefined || mentionIds[username].length <= 10)
+    if (
+      usernameToInMentionIds[username] === undefined ||
+      usernameToInMentionIds[username].length <= 10
+    )
       return
 
     const nodeId = `user-${id}`
     const nodeUser = {
       ...user,
-      mentionIds: mentionIds[username],
+      inMentionIds: usernameToInMentionIds[username],
+      outMentionIds: idToOutMentionIds[id] || [],
     }
     nodes.push({
       data: {
@@ -109,8 +126,8 @@ export default function Home({ graphData }: Props) {
   const cyRef = useRef(null)
   const detailRef = useRef(null)
 
-  const startClosingDetail = () => setIsDetailOpen(false)
-  const onDetailClosed = () => {
+  const startClosingDetail = useCallback(() => setIsDetailOpen(false), [])
+  const onDetailClosed = useCallback(() => {
     if (isDetailOpen) return
 
     // to trigger hashchange
@@ -122,7 +139,7 @@ export default function Home({ graphData }: Props) {
       document.title,
       window.location.pathname + window.location.search
     )
-  }
+  }, [isDetailOpen])
 
   useEffect(() => {
     const setResourceByHash = () => {
@@ -204,7 +221,7 @@ export default function Home({ graphData }: Props) {
         layout: {
           name: 'concentric',
           concentric(node: any) {
-            return node.data('user').mentionIds.length
+            return node.data('user').inMentionIds.length
           },
           levelWidth(_nodes) {
             return 4
@@ -239,7 +256,7 @@ export default function Home({ graphData }: Props) {
       <div
         ref={detailRef}
         className={
-          'fixed bottom-0 left-0 border-t bg-white w-full h-72 overflow-y-scroll py-2 px-4 transition-transform transform ' +
+          'fixed bottom-0 left-0 border-t bg-white w-full h-72 overflow-y-scroll transition-transform transform ' +
           'sm:right-0 sm:top-0 sm:left-auto sm:bottom-auto sm:border-t-0 sm:border-l sm:w-80 sm:h-full ' +
           (isDetailOpen
             ? 'translate-y-0 sm:translate-x-0'
