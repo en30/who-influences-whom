@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import Graph, { selected } from '../components/Graph'
 import Tweet from '../components/Tweet'
 import User from '../components/User'
+import CloseButton from '../components/CloseButton'
 import * as Repo from '../src/repo'
 import {
   GraphData,
@@ -171,7 +172,7 @@ export default function Home({ graphData }: Props) {
       <div
         ref={detailRef}
         className={
-          'fixed bottom-0 left-0 border-t bg-white w-full h-72 overflow-y-scroll transition-transform transform ' +
+          'fixed bottom-0 left-0 border-t bg-white w-full h-72 transition-transform transform ' +
           'sm:right-0 sm:top-0 sm:left-auto sm:bottom-auto sm:border-t-0 sm:border-l sm:w-80 sm:h-full ' +
           (isDetailOpen
             ? 'translate-y-0 sm:translate-x-0'
@@ -179,12 +180,14 @@ export default function Home({ graphData }: Props) {
         }
         onTransitionEnd={onDetailClosed}
       >
-        {resource && resource[0] === 'user' && (
-          <User user={resource[1]} close={startClosingDetail} />
-        )}
-        {resource && resource[0] === 'tweet' && (
-          <Tweet tweet={resource[1]} close={startClosingDetail} />
-        )}
+        <div className="absolute right-0 top-0 px-4 py-2 z-20">
+          <CloseButton onClick={startClosingDetail} />
+        </div>
+
+        <div className="overflow-y-scroll h-72">
+          {resource && resource[0] === 'user' && <User user={resource[1]} />}
+          {resource && resource[0] === 'tweet' && <Tweet tweet={resource[1]} />}
+        </div>
       </div>
     </div>
   )

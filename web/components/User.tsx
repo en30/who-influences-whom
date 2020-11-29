@@ -1,7 +1,6 @@
-import { MouseEvent, memo, useState } from 'react'
+import { memo, useState } from 'react'
 import { UserModel } from '../@types'
 import { Mention, ShortendedURL } from '../src/repo'
-import CloseButton from './CloseButton'
 import EmbeddedTweet from './EmbeddedTweet'
 
 const Link = ({ to, children, ...props }) => (
@@ -146,19 +145,12 @@ const Tweets = ({ title, ids }) => {
   )
 }
 
-const User = ({
-  user,
-  close,
-}: {
-  user: UserModel
-  close: (event: MouseEvent<HTMLButtonElement>) => void
-}) => (
+const User = ({ user }: { user: UserModel }) => (
   <>
     <div className="flex items-center px-4 py-2">
       <div className="flex-1 text-sm text-gray-500">
         {user.inMentionIds.length} mentions
       </div>
-      <CloseButton onClick={close} />
     </div>
     <div className="px-4 flex">
       <Link to={user} className="w-12 h-12" style={{ flex: '0 0 48px' }}>
