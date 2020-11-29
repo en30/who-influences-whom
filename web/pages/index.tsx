@@ -184,7 +184,7 @@ export default function Home({ graphData }: Props) {
           <CloseButton onClick={startClosingDetail} />
         </div>
 
-        <div className="overflow-y-scroll h-72">
+        <div className="overflow-y-scroll h-72 sm:h-full">
           {resource && resource[0] === 'user' && <User user={resource[1]} />}
           {resource && resource[0] === 'tweet' && <Tweet tweet={resource[1]} />}
         </div>
