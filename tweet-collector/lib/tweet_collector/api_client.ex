@@ -4,6 +4,37 @@ defmodule TweetCollector.APIClient do
     host: "api.twitter.com"
   }
 
+  @tweet_fields ~w[
+    attachments
+    author_id
+    context_annotations
+    conversation_id
+    created_at
+    entities
+    in_reply_to_user_id
+    referenced_tweets
+  ]
+
+  @expansions ~w[
+    author_id
+    referenced_tweets.id
+    in_reply_to_user_id
+    entities.mentions.username
+    referenced_tweets.id.author_id
+  ]
+
+  @user_fields ~w[
+    id
+    name
+    username
+    created_at
+    description
+    entities
+    profile_image_url
+    public_metrics
+    url
+  ]
+
   def related_tweets_of(id, params \\ %{}) do
     request(
       :get,
@@ -12,34 +43,25 @@ defmodule TweetCollector.APIClient do
         %{
           "query" => "conversation_id:#{id}",
           "max_results" => 100,
-          "tweet.fields" => ~w[
-            attachments
-            author_id
-            context_annotations
-            conversation_id
-            created_at
-            entities
-            in_reply_to_user_id
-            referenced_tweets
-          ],
-          "expansions" => ~w[
-            author_id
-            referenced_tweets.id
-            in_reply_to_user_id
-            entities.mentions.username
-            referenced_tweets.id.author_id
-          ],
-          "user.fields" => ~w[
-            id
-            name
-            username
-            created_at
-            description
-            entities
-            profile_image_url
-            public_metrics
-            url
-          ]
+          "tweet.fields" => @tweet_fields,
+          "expansions" => @expansions,
+          "user.fields" => @user_fields
+        },
+        params
+      )
+    )
+  end
+
+  def tweets(ids, params \\ %{}) do
+    request(
+      :get,
+      "/tweets",
+      Map.merge(
+        %{
+          "ids" => Enum.join(ids, ","),
+          "tweet.fields" => @tweet_fields,
+          "expansions" => @expansions,
+          "user.fields" => @user_fields
         },
         params
       )

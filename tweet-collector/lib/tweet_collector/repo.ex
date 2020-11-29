@@ -33,6 +33,23 @@ defmodule TweetCollector.Repo do
     end)
   end
 
+  def prepare_tweets(tweets) do
+    tweets
+    |> Enum.uniq_by(& &1["id"])
+    |> Enum.map(fn tweet = %{"author_id" => author_id, "id" => id} ->
+      prepare_write("users/#{author_id}/tweets/#{id}", tweet)
+    end)
+  end
+
+  def prepare_users(users) do
+    users
+    |> Enum.uniq_by(& &1["id"])
+    |> Task.async_stream(&embed_image_data/1)
+    |> Enum.map(fn {:ok, user} ->
+      prepare_write("users/#{user["id"]}", user)
+    end)
+  end
+
   def prepare_write(path, v) do
     %Model.Write{
       update: %Model.Document{
@@ -40,6 +57,17 @@ defmodule TweetCollector.Repo do
         fields: Enum.map(v, fn {k, v} -> {k, to_value(v)} end) |> Map.new()
       }
     }
+  end
+
+  defp embed_image_data(user) do
+    case :httpc.request(:get, {user["profile_image_url"], []}, [], body_format: :binary) do
+      {:ok, {{_, 200, 'OK'}, headers, body}} ->
+        content_type = Enum.find_value(headers, fn {k, v} -> k == 'content-type' && v end)
+
+        Map.merge(user, %{
+          "profile_image_data_uri" => "data:#{content_type};base64,#{Base.encode64(body)}"
+        })
+    end
   end
 
   defp base_path() do
