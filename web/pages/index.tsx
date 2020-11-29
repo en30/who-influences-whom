@@ -1,13 +1,7 @@
 import { GetStaticProps } from 'next'
-import cytoscape from 'cytoscape'
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useCallback,
-} from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Header from '../components/Header'
+import Graph, { selected } from '../components/Graph'
 import Tweet from '../components/Tweet'
 import User from '../components/User'
 import * as Repo from '../src/repo'
@@ -128,8 +122,6 @@ type Resource = ['user', UserModel] | ['tweet', TweetModel] | null
 export default function Home({ graphData }: Props) {
   const [resource, setResource] = useState<Resource>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
-  const onCyCreated = useRef<(cy: cytoscape.Core) => void>(() => undefined)
-  const cyRef = useRef(null)
   const detailRef = useRef(null)
 
   const startClosingDetail = useCallback(() => setIsDetailOpen(false), [])
@@ -151,31 +143,17 @@ export default function Home({ graphData }: Props) {
     const setResourceByHash = () => {
       if (detailRef.current) detailRef.current.scrollTop = 0
 
-      let match = location.hash.match(/^#user-([\d]+)$/)
-      if (match) {
-        const node = graphData.elements.nodes.find(
-          (node) => node.data.user.id === match[1]
-        )
-        if (!node) return
-        setResource(['user', node.data.user])
-        onCyCreated.current = (cy) => cy.$(`#${node.data.id}`).select()
+      const match = selected(location.hash, graphData)
+      if (match === null) {
+        setResource(null)
+        setIsDetailOpen(false)
+      } else if (match[0] === 'node') {
+        setResource(['user', match[1].data.user])
         setIsDetailOpen(true)
-        return
-      }
-      match = location.hash.match(/^#tweet-([\d]+)$/)
-      if (match) {
-        const edge = graphData.elements.edges.find(
-          (edge) => edge.data.tweet.id === match[1]
-        )
-        if (!edge) return
-        setResource(['tweet', edge.data.tweet])
-        onCyCreated.current = (cy) => cy.$(`#${edge.data.id}`).select()
+      } else if (match[0] === 'edge') {
+        setResource(['tweet', match[1].data.tweet])
         setIsDetailOpen(true)
-        return
       }
-
-      setResource(null)
-      setIsDetailOpen(false)
     }
 
     setResourceByHash()
@@ -183,80 +161,11 @@ export default function Home({ graphData }: Props) {
     return () => window.removeEventListener('hashchange', setResourceByHash)
   }, [])
 
-  useLayoutEffect(() => {
-    if (cyRef.current) {
-      const cy = cytoscape({
-        container: cyRef.current,
-        autoungrabify: true,
-        ...graphData,
-        style: [
-          {
-            selector: 'node',
-            style: {
-              height: 80,
-              width: 80,
-              'background-fit': 'cover',
-              'border-color': '#e5e7eb',
-              'border-width': 2,
-              'background-image': (ele) =>
-                ele.data().user.profile_image_data_uri,
-            },
-          },
-          {
-            selector: 'node:selected',
-            style: {
-              height: 120,
-              width: 120,
-            },
-          },
-          {
-            selector: 'edge',
-            style: {
-              width: 1,
-              'curve-style': 'straight',
-              'target-arrow-shape': 'triangle',
-            },
-          },
-          {
-            selector: 'edge:selected',
-            style: {
-              width: 3,
-            },
-          },
-        ],
-        layout: {
-          name: 'concentric',
-          concentric(node: any) {
-            return node.data('user').inMentionIds.length
-          },
-          levelWidth(_nodes) {
-            return 4
-          },
-        },
-      })
-      cy.on('tap', 'node', (e) => {
-        location.hash = e.target.id()
-      })
-      cy.on('tap', 'edge', (e) => {
-        location.hash = e.target.id()
-      })
-      cy.on('tap', (e) => {
-        if (e.target === cy) {
-          startClosingDetail()
-        }
-      })
-      onCyCreated.current(cy)
-      onCyCreated.current = () => undefined
-
-      return () => cy.destroy()
-    }
-  }, [cyRef.current])
-
   return (
     <div>
       <Header />
       <main>
-        <div className="w-screen h-screen" ref={cyRef}></div>
+        <Graph data={graphData} onTapSpace={startClosingDetail} />
       </main>
 
       <div
