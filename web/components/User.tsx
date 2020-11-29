@@ -109,7 +109,7 @@ const Tweets = ({ title, ids }) => {
             className="px-3 py-1 text-xs border rounded text-gray-800 shadow"
             onClick={() => setOpen(true)}
           >
-            Load tweets
+            Load {ids.length} tweets
           </button>
           <div className="mt-2 flex items-top text-yellow-400">
             <svg
