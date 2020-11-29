@@ -17,5 +17,15 @@ defmodule TweetCollector.Router do
 
   plug(:dispatch)
 
-  post("/tweets/:id/fetch", to: TweetCollector.Fetcher)
+  post "/tweets/:id/conversations/fetch" do
+    %Plug.Conn{params: %{"id" => tweet_id}} = conn
+    {:ok, _} = TweetCollector.RecentSearch.import_conversations(tweet_id)
+    send_resp(conn, 200, "OK")
+  end
+
+  post "/tweets/:id/quoted_tweets/fetch" do
+    %Plug.Conn{params: %{"id" => tweet_id}} = conn
+    {:ok, _} = TweetCollector.RecentSearch.import_quoted_tweets(tweet_id)
+    send_resp(conn, 200, "OK")
+  end
 end

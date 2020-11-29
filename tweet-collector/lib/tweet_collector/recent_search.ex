@@ -1,30 +1,27 @@
-defmodule TweetCollector.Fetcher do
+defmodule TweetCollector.RecentSearch do
   require Logger
-  import Plug.Conn
 
   alias TweetCollector.Repo
 
-  def init(options), do: options
-
-  def call(conn = %Plug.Conn{params: %{"id" => tweet_id}}, _opts) do
-    {:ok, _} = fetch_and_save(tweet_id)
-
-    conn
-    |> put_resp_content_type("text/plain")
-    |> send_resp(200, "OK\n")
+  def import_conversations(id) do
+    fetch_and_save(id, &client().related_tweets_of/2, "related_tweets_of")
   end
 
-  defp fetch_and_save(tweet_id) do
+  def import_quoted_tweets(id) do
+    fetch_and_save(id, &client().quoted_tweets_of/2, "quoted_tweets_of")
+  end
+
+  defp fetch_and_save(id, fetch, cursor) do
     repo_conn = Repo.connect()
 
-    case fetch(repo_conn, tweet_id) do
+    case fetch_next(repo_conn, id, fetch, cursor) do
       {:ok, %{"meta" => %{"result_count" => 0}}} ->
         Logger.info("no tweet to add")
         {:ok, nil}
 
       {:ok, res} ->
         writes =
-          [Repo.prepare_write("cursors/related_tweets_of", res["meta"])] ++
+          [Repo.prepare_write("cursors/#{cursor}", res["meta"])] ++
             Repo.prepare_tweets(res["data"] ++ res["includes"]["tweets"]) ++
             Repo.prepare_users(res["includes"]["users"])
 
@@ -34,18 +31,18 @@ defmodule TweetCollector.Fetcher do
     end
   end
 
-  defp fetch(conn, tweet_id) do
-    case next_token(conn) do
+  defp fetch_next(conn, id, fetch, cursor) do
+    case next_token(conn, cursor) do
       {:ok, nil} ->
-        client().related_tweets_of(tweet_id)
+        fetch.(id, %{})
 
       {:ok, next_token} ->
-        client().related_tweets_of(tweet_id, %{"next_token" => next_token})
+        fetch.(id, %{"next_token" => next_token})
     end
   end
 
-  defp next_token(conn) do
-    case Repo.find(conn, "cursors/related_tweets_of") do
+  defp next_token(conn, cursor) do
+    case Repo.find(conn, "cursors/#{cursor}") do
       {:ok, meta} ->
         {:ok, meta["next_token"]}
 

@@ -68,6 +68,29 @@ defmodule TweetCollector.APIClient do
     )
   end
 
+  def quoted_tweets_of(id, params \\ %{}) do
+    request(
+      :get,
+      "/tweets/search/recent",
+      Map.merge(
+        %{
+          "query" => "is:quote has:mentions \"#{full_tweet_url(id)}\"",
+          "max_results" => 100,
+          "tweet.fields" => @tweet_fields,
+          "expansions" => @expansions,
+          "user.fields" => @user_fields
+        },
+        params
+      )
+    )
+  end
+
+  defp full_tweet_url(id) do
+    tweet = ExTwitter.show(id)
+
+    "https://twitter.com/#{tweet.user.screen_name}/status/#{id}"
+  end
+
   defp request(method, path, params) do
     case :httpc.request(
            method,
