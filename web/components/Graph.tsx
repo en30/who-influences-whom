@@ -90,14 +90,23 @@ const Graph = ({ data, onTapSpace }: Props) => {
         if (e.target === cy) onTapSpace()
       })
 
-      const match = selected(location.hash, data)
-      if (match && match[0] === 'node') {
-        cy.$(`#${match[1].data.id}`).select()
-      } else if (match && match[0] === 'edge') {
-        cy.$(`#${match[1].data.id}`).select()
+      const selectByHash = () => {
+        const match = selected(location.hash, data)
+        cy.$(':selected').unselect()
+        if (match && match[0] === 'node') {
+          cy.$(`#${match[1].data.id}`).select()
+        } else if (match && match[0] === 'edge') {
+          cy.$(`#${match[1].data.id}`).select()
+        }
       }
 
-      return () => cy.destroy()
+      selectByHash()
+      window.addEventListener('hashchange', selectByHash, false)
+
+      return () => {
+        cy.destroy()
+        window.removeEventListener('hashchange', selectByHash)
+      }
     }
   }, [cyRef.current])
 
