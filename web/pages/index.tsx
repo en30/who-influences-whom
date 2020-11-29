@@ -23,6 +23,12 @@ type Props = {
   graphData: GraphData
 }
 
+const sortAsBigInt = (a: string, b: string) => {
+  const bia = BigInt(a),
+    bib = BigInt(b)
+  return bia < bib ? -1 : bia > bib ? 1 : 0
+}
+
 export const getStaticProps: GetStaticProps = async (_context) => {
   const [users, tweets] = await Promise.all([Repo.allUsers(), Repo.allTweets()])
   console.log(users.length, 'users') // eslint-disable-line no-console
@@ -58,8 +64,8 @@ export const getStaticProps: GetStaticProps = async (_context) => {
     const nodeId = `user-${id}`
     const nodeUser = {
       ...user,
-      inMentionIds: usernameToInMentionIds[username],
-      outMentionIds: idToOutMentionIds[id] || [],
+      inMentionIds: usernameToInMentionIds[username].sort(sortAsBigInt),
+      outMentionIds: (idToOutMentionIds[id] || []).sort(sortAsBigInt),
     }
     nodes.push({
       data: {
