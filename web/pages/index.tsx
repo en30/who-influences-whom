@@ -108,6 +108,7 @@ export default function Home({ graphData }: Props) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const onCyCreated = useRef<(cy: cytoscape.Core) => void>(() => undefined)
   const cyRef = useRef(null)
+  const detailRef = useRef(null)
 
   const startClosingDetail = () => setIsDetailOpen(false)
   const onDetailClosed = () => {
@@ -126,6 +127,8 @@ export default function Home({ graphData }: Props) {
 
   useEffect(() => {
     const setResourceByHash = () => {
+      if (detailRef.current) detailRef.current.scrollTop = 0
+
       let match = location.hash.match(/^#user-([\d]+)$/)
       if (match) {
         const node = graphData.elements.nodes.find(
@@ -288,6 +291,7 @@ export default function Home({ graphData }: Props) {
       </main>
 
       <div
+        ref={detailRef}
         className={
           'fixed bottom-0 left-0 border-t bg-white w-full h-72 overflow-y-scroll py-2 px-4 transition-transform transform ' +
           'sm:right-0 sm:top-0 sm:left-auto sm:bottom-auto sm:border-t-0 sm:border-l sm:w-80 sm:h-full ' +
